@@ -1,0 +1,3 @@
+[submodule "lib/anyparse"]
+	path = lib/anyparse
+	url = https://github.com/null-ptr-party/anyparse.git

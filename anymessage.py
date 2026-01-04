@@ -3,7 +3,7 @@ import faulthandler
 faulthandler.enable()
 
 # load dll
-parser_dll = ctypes.cdll.LoadLibrary(r"./lib/bitstripper.dll")
+parser_dll = ctypes.cdll.LoadLibrary(r"./lib/anyparse/anyparse.dll")
 
 # define "macro" vars
 BIG_ENDIAN = False
