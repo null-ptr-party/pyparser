@@ -18,26 +18,38 @@ class msg_builder(tk.Frame):
         self.columnconfigure(1, weight=1)
         
         msgframe = tk.Frame(self)
-        msgframe.grid(row=0, column=0, sticky="nw")
-
-        msglabel = tk.Label(msgframe, text="Messaage Name")
+        msgframe.grid(row=0, column=0, sticky="n")
+        msglabel = tk.Label(msgframe, text="Messaage Name", justify="left")
         msglabel.pack(side=tk.TOP)
 
+        # message name entry
         msgname_str = tk.StringVar(msgframe, value = "test")
         msgname = tk.Entry(msgframe, textvariable=msgname_str)
-        msgname.pack(side=tk.TOP)
+        msgname.pack(side=tk.TOP, fill="x")
 
+        # accept button
         accept = tk.Button(self, text="Update")
-        accept.grid(row=1, column=1)
+        accept.grid(row=0, column=1, sticky="ns", padx=(5,5), rowspan=3)
 
-        byteslabel = tk.Label(self, text="Number of Bytes")
-        byteslabel.grid(row=2, column=0, sticky="nw")
-        num_bytes_str = tk.StringVar(self, value = "test")
-        num_bytes = tk.Entry(self, textvariable=num_bytes_str)
-        num_bytes.grid(row= 2, column=0)
+        # number of bytes entry
+        num_bytes_str = tk.IntVar(self, value = 0)
+        byteslabel = tk.Label(msgframe, text="Number of Bytes", justify="left")
+        byteslabel.pack(side=tk.TOP, fill="x")
+        num_bytes = tk.Entry(msgframe, textvariable=num_bytes_str)
+        num_bytes.pack(side=tk.TOP, fill="x")
 
-        field_select = ttk.Combobox(self, values=fieldnum_options)
-        field_select.grid(row=2, column=0)
+        # field selector
+        field_select_lbl = tk.Label(msgframe, text="Select Field", justify="left")
+        field_select_lbl.pack(side=tk.TOP)
+        field_select = ttk.Combobox(msgframe, values=fieldnum_options)
+        field_select.pack(side=tk.TOP)
+
+        #number of fields display
+        num_fields = tk.IntVar(self, 0)
+        num_fields_lbl = tk.Label(msgframe, text="Number of Fields", justify="left")
+        num_fields_lbl.pack(side=tk.TOP)
+        num_fields_disp = tk.Label(msgframe, textvariable=num_fields)
+        num_fields_disp.pack(side=tk.TOP)
         
 
 class MainWindow(tk.Tk):
@@ -51,7 +63,7 @@ class MainWindow(tk.Tk):
         self.columnconfigure(1, weight=1)
         # configure rows and columns
         msg = msg_builder(self)
-        msg.grid(row=0,column=0)
+        msg.grid(row=0,column=0, sticky="nw")
 
 
 if __name__ == "__main__":
