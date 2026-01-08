@@ -55,7 +55,7 @@ field_cfg._fields_ = [("fieldname", FIELDNAME_ARRAY),
             ("converter", ctypes.c_ubyte),
             ("dtype", ctypes.c_ubyte),
             ("sf", ctypes.c_double),
-            ("parsed_val", parsed_result)
+            ("parsed_val", parsed_result),
             ("next_field", field_cfg_ptr)]
 
 # message config class
