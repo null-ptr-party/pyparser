@@ -21,6 +21,7 @@ DTYPE_OUT_FLOAT = 1
 DTYPE_OUT_CHAR = 2
 DTYPE_OUT_UINT = 3
 
+MAX_NUM_FIELDS = 10
 MAX_FIELDNAME_LEN = 30
 MAX_BITMASK_LEN_BYTES = 20
 NUM_CONVERTER_OPTIONS = 6
@@ -39,21 +40,6 @@ class parsed_result(ctypes.Union):
                 ("float_result", ctypes.c_double),
                 ("char_result", 4*ctypes.c_char)]
 
-# parsed field class prototype
-class parsed_field(ctypes.Structure):
-    # note prototype is required for linked lists
-    pass
-
-parsed_field_ptr = ctypes.POINTER(parsed_field)
-
-parsed_field._fields_ = [("fieldname", FIELDNAME_ARRAY),
-            ("dtype", ctypes.c_ubyte),
-            ("parsed_val", parsed_result),
-            ("next_field", parsed_field_ptr)]
-
-# pointer to parsed_field class prototype
-pfield_pntr = ctypes.POINTER(parsed_field)
-
 # field config class prototype
 class field_cfg(ctypes.Structure):
     # note prototype is required for linked lists.
@@ -69,6 +55,7 @@ field_cfg._fields_ = [("fieldname", FIELDNAME_ARRAY),
             ("converter", ctypes.c_ubyte),
             ("dtype", ctypes.c_ubyte),
             ("sf", ctypes.c_double),
+            ("parsed_val", parsed_result)
             ("next_field", field_cfg_ptr)]
 
 # message config class
@@ -77,8 +64,7 @@ class message_cfg(ctypes.Structure):
                 ("num_bytes", ctypes.c_ubyte),
                 ("num_fields", ctypes.c_ubyte),
                 ("whend", ctypes.c_bool),
-                ("first_field", field_cfg),
-                ("first_pfield", pfield_pntr)]
+                ("first_field", field_cfg)]
 
 message_cfg_ptr = ctypes.POINTER(message_cfg)
 
