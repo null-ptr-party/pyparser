@@ -153,6 +153,7 @@ class message:
         
         # call append_field function from dll.
         parser_dll.append_field(self.msg_cfg, bitmask, fieldname, converter, dtype, sf)
+        self.num_fields = self.get_num_fields
 
     def get_field(self, idx):
         # get field by index position
@@ -175,7 +176,9 @@ class message:
         fparsed_ptr = ctypes.c_char_p(fparsed.encode("utf-8"))
         parser_dll.open_and_parse_file(ftoparse_ptr, fparsed_ptr, self.msg_cfg, readmethod)
 
-      
+    def get_num_fields(self):
+        return self.msg_cfg.contents.num_fields
+
     def __del__(self):
         # define function to free fields when class deleted
         parser_dll.rm_all_msg_fields(self.msg_cfg)
