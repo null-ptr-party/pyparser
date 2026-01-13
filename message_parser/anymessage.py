@@ -9,6 +9,7 @@ parser_dll = ctypes.cdll.LoadLibrary(r"./lib/anyparse/anyparse.dll")
 BIG_ENDIAN = False
 LITTLE_ENDIAN = True
 
+# converters
 READ_TWOS_COMP = 0
 READ_OB = 1
 READ_COB = 2
@@ -16,6 +17,7 @@ READ_UNS = 3
 READ_IEEE_FP = 4
 READ_CHAR = 5
 
+# dtypes
 DTYPE_OUT_INT =  0
 DTYPE_OUT_FLOAT = 1
 DTYPE_OUT_CHAR = 2
@@ -55,7 +57,7 @@ field_cfg._fields_ = [("fieldname", FIELDNAME_ARRAY),
             ("converter", ctypes.c_ubyte),
             ("dtype", ctypes.c_ubyte),
             ("sf", ctypes.c_double),
-            ("parsed_val", parsed_result)
+            ("parsed_val", parsed_result),
             ("next_field", field_cfg_ptr)]
 
 # message config class
@@ -70,30 +72,61 @@ message_cfg_ptr = ctypes.POINTER(message_cfg)
 
 # specify return types for dll functions
 parser_dll.init_msgcfg.restype = ctypes.c_int32
-parser_dll.init_msgcfg.argtypes = [message_cfg_ptr, ctypes.c_char_p, ctypes.c_ubyte, ctypes.c_bool]
+parser_dll.init_msgcfg.argtypes = [message_cfg_ptr, 
+                                   ctypes.c_char_p, 
+                                   ctypes.c_ubyte, 
+                                   ctypes.c_bool]
 
 parser_dll.append_field.restype = ctypes.c_int32
-parser_dll.append_field.argtypes = [message_cfg_ptr, bitmask_pointer,
-                                 ctypes.c_char_p, ctypes.c_ubyte,
-                                 ctypes.c_ubyte, ctypes.c_double]
+parser_dll.append_field.argtypes = [message_cfg_ptr,
+                                    bitmask_pointer,
+                                    ctypes.c_char_p,
+                                    ctypes.c_ubyte,
+                                    ctypes.c_ubyte,
+                                    ctypes.c_double]
 
 parser_dll.add_field_at_idx.restype = ctypes.c_int32
-parser_dll.add_field_at_idx.argtypes = [message_cfg_ptr, ctypes.c_uint32,
-                                 bitmask_pointer, ctypes.c_char_p,
-                                 ctypes.c_ubyte, ctypes.c_ubyte, 
-                                 ctypes.c_double]
+parser_dll.add_field_at_idx.argtypes = [message_cfg_ptr,
+                                        ctypes.c_uint32,
+                                        bitmask_pointer,
+                                        ctypes.c_char_p,
+                                        ctypes.c_ubyte,
+                                        ctypes.c_ubyte,
+                                        ctypes.c_double]
+
+parser_dll.rm_field_by_idx.restype = ctypes.c_int32
+parser_dll.rm_field_by_idx.argtypes = [message_cfg_ptr,
+                                       ctypes.c_uint32]
 
 parser_dll.rm_all_msg_fields.restype = ctypes.c_int32
 parser_dll.rm_all_msg_fields.argtypes = [message_cfg_ptr]
 
 parser_dll.open_and_parse_file.restype = ctypes.c_int32
-parser_dll.open_and_parse_file.argtypes = [ctypes.c_char_p, ctypes.c_char_p, message_cfg_ptr,
+parser_dll.open_and_parse_file.argtypes = [ctypes.c_char_p,
+                                           ctypes.c_char_p,
+                                           message_cfg_ptr,
                                            ctypes.c_bool]
+
+parser_dll.update_fieldcfg_by_idx.restype = ctypes.c_int32
+parser_dll.update_fieldcfg_by_idx.argtypes = [message_cfg_ptr,
+                                              ctypes.c_uint32,
+                                              bitmask_pointer,
+                                              ctypes.c_char_p,
+                                              ctypes.c_ubyte,
+                                              ctypes.c_ubyte,
+                                              ctypes.double]
+
+parser_dll.field_cfg_by_idx.restype = field_cfg_ptr
+parser_dll.field_cfg_by_idx.argtypes = [message_cfg_ptr,
+                                        ctypes.uint32]
+
+
 
 # define message class.
 class message:
     def __init__(self):
         self.msg_cfg = message_cfg()
+        self.num_fields = 0
 
     def init_msgcfg(self, msgcfg: dict):
         # initializes messageconfig from dict
@@ -119,8 +152,21 @@ class message:
         sf = ctypes.c_double(fieldcfg["sf"])
         
         # call append_field function from dll.
-        parser_dll.append_field(self.msg_cfg, bitmask, fieldname, converter,
-                                dtype, sf)
+        parser_dll.append_field(self.msg_cfg, bitmask, fieldname, converter, dtype, sf)
+
+    def get_field(self, idx):
+        # get field by index position
+        assert idx < self.num_field
+        ct_idx = ctypes.c_uint32(idx)
+        field_ptr = parser_dll.field_cfg_by_idx(self.msg_cfg, ct_idx)
+        
+        return (field_ptr.contents.fieldname,
+                field_ptr.contents.converter,
+                field_ptr.contents.bitmask,
+                field_ptr.contents.num_bits,
+                field_ptr.contents.dtype,
+                field_ptr.contents.sf,
+                field_ptr.contents.parsed_val)
 
     def parse_file(self, ftoparse:str, fparsed: str, readmethod: bool):
         # opens and parsed file ftoparse and outputs parsed data
