@@ -3,7 +3,7 @@ import faulthandler
 faulthandler.enable()
 
 # load dll
-parser_dll = ctypes.cdll.LoadLibrary(r"./lib/anyparse/anyparse.dll")
+parser_dll = ctypes.cdll.LoadLibrary(r"./message_parser/lib/anyparse/anyparse.dll")
 
 # define "macro" vars
 BIG_ENDIAN = False
@@ -73,10 +73,7 @@ message_cfg_ptr = ctypes.POINTER(message_cfg)
 
 # specify return types for dll functions
 parser_dll.init_msgcfg.restype = ctypes.c_int32
-parser_dll.init_msgcfg.argtypes = [message_cfg_ptr, 
-                                   ctypes.c_char_p, 
-                                   ctypes.c_ubyte, 
-                                   ctypes.c_bool]
+parser_dll.init_msgcfg.argtypes = [message_cfg_ptr]
 
 parser_dll.update_msgcfg.restype = ctypes.c_int32
 parser_dll.update_msgcfg.argtypes = [message_cfg_ptr, 
@@ -133,22 +130,13 @@ parser_dll.field_cfg_by_idx.argtypes = [message_cfg_ptr,
 class message:
     def __init__(self):
         self.msg_cfg = message_cfg()
+        self.msg_cfg_ptr = ctypes.pointer(self.msg_cfg)
+        self.init_msgcfg(self.msg_cfg)
         self.num_fields = 0
 
     def init_msgcfg(self, msgcfg: dict):
-        # initializes messageconfig from dict
-        # check name length and endianness
-        assert len(msgcfg["message_name"]) < MAX_FIELDNAME_LEN
-        assert msgcfg["num_bytes"] < MAX_BITMASK_LEN_BYTES
-        assert type(msgcfg["whend"]) == bool
-
-        # create c compatible types.
-        msgname = ctypes.c_char_p(msgcfg["message_name"].encode("utf-8"))
-        num_bytes = ctypes.c_ubyte(msgcfg["num_bytes"])
-        whend = ctypes.c_bool(msgcfg["whend"])
-
         # initialize message config
-        parser_dll.init_msgcfg(self.msg_cfg, msgname, num_bytes, whend);
+        parser_dll.init_msgcfg(self.msg_cfg_ptr);
 
     def append_field_cfg(self, fieldcfg):
         # validate inputs
@@ -164,15 +152,23 @@ class message:
         sf = ctypes.c_double(fieldcfg["sf"])
         
         # call append_field function from dll.
-        parser_dll.append_field(self.msg_cfg, bitmask, fieldname, converter, dtype, sf)
+        parser_dll.append_field(self.msg_cfg_ptr, bitmask, fieldname, converter, dtype, sf)
         # get number of fields and update python fields
         self.num_fields = self.get_num_fields()
+    
+    def get_msg_contents(self):
+        
+        fieldname = message.get_array_elements(self.msg_cfg.message_name,)
+        return (fieldname,
+                self.msg_cfg.num_bytes,
+                self.msg_cfg.num_fields,
+                self.msg_cfg.whend)
 
     def get_field_contents(self, idx):
         # get field by index position
         assert idx < self.num_fields
         ct_idx = ctypes.c_uint32(idx)
-        field_ptr = parser_dll.field_cfg_by_idx(self.msg_cfg, ct_idx)
+        field_ptr = parser_dll.field_cfg_by_idx(self.msg_cfg_ptr, ct_idx)
 
         # get dtype output
         if (field_ptr.contents.dtype == DTYPE_OUT_INT):
@@ -207,14 +203,14 @@ class message:
         num_bytes = ctypes.c_ubyte(num_bytes)
         whend = ctypes.c_bool(whend)
 
-        parser_dll.update_msgcfg(msgname, num_bytes, whend)
+        parser_dll.update_msgcfg(self.msg_cfg_ptr, msgname, num_bytes, whend)
 
     def parse_file(self, ftoparse:str, fparsed: str, readmethod: bool):
         # opens and parsed file ftoparse and outputs parsed data
         # to file fparsed. Note parsed readmethod 0=binary, 1=hexascii.
         ftoparse_ptr = ctypes.c_char_p(ftoparse.encode("utf-8"))
         fparsed_ptr = ctypes.c_char_p(fparsed.encode("utf-8"))
-        parser_dll.open_and_parse_file(ftoparse_ptr, fparsed_ptr, self.msg_cfg, readmethod)
+        parser_dll.open_and_parse_file(ftoparse_ptr, fparsed_ptr, self.msg_cfg_ptr, readmethod)
     
     def update_cfg_by_idx(self, idx, fieldname, dtype, converter, bitmask, sf):
         # get field by index position
@@ -231,7 +227,7 @@ class message:
         bitmask = ctypes.pointer(self.bitmask_from_tuple(bitmask))
         sf = ctypes.c_double(sf)
 
-        parser_dll.update_cfg_by_idx(idx, fieldname, dtype, converter, bitmask, sf)
+        parser_dll.update_cfg_by_idx(self.msg_cfg_ptr, idx, fieldname, dtype, converter, bitmask, sf)
 
     def get_num_fields(self):
         return self.msg_cfg.num_fields
@@ -243,7 +239,7 @@ class message:
     @staticmethod
     def get_array_elements(c_array, array_size):
 
-        return [c_array[idx] for idx in range(0, array_size)]
+        return [c_array[idx] for idx in range(array_size)]
 
     @staticmethod
     def bitmask_from_tuple(bmask_array:tuple[int]):
