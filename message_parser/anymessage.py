@@ -138,18 +138,18 @@ class message:
         # initialize message config
         parser_dll.init_msgcfg(self.msg_cfg_ptr);
 
-    def append_field_cfg(self, fieldcfg):
+    def append_field_cfg(self, fieldname:str, dtype:int, converter:int, bitmask:tuple[int], sf: float|int):
         # validate inputs
-        assert len(fieldcfg["fieldname"]) < MAX_FIELDNAME_LEN
-        assert ((fieldcfg["dtype"] >= 0) and (fieldcfg["dtype"] < NUM_DTYPE_OPTIONS))
-        assert ((fieldcfg["converter"] >= 0) and (fieldcfg["converter"] < NUM_CONVERTER_OPTIONS))
+        assert len(fieldname) < MAX_FIELDNAME_LEN
+        assert ((dtype >= 0) and (dtype < NUM_DTYPE_OPTIONS))
+        assert (converter >= 0) and (converter < NUM_CONVERTER_OPTIONS)
 
         # create c compatible types.
-        fieldname = ctypes.c_char_p(fieldcfg["fieldname"].encode("utf-8"))
-        dtype = ctypes.c_ubyte(fieldcfg["dtype"])
-        converter = ctypes.c_ubyte(fieldcfg["converter"])
-        bitmask = ctypes.pointer(self.bitmask_from_tuple(fieldcfg["bitmask"]))
-        sf = ctypes.c_double(fieldcfg["sf"])
+        fieldname = ctypes.c_char_p(fieldname.encode("utf-8"))
+        dtype = ctypes.c_ubyte(dtype)
+        converter = ctypes.c_ubyte(converter)
+        bitmask = ctypes.pointer(self.bitmask_from_tuple(bitmask))
+        sf = ctypes.c_double(sf)
         
         # call append_field function from dll.
         parser_dll.append_field(self.msg_cfg_ptr, bitmask, fieldname, converter, dtype, sf)
@@ -157,12 +157,17 @@ class message:
         self.num_fields = self.get_num_fields()
     
     def get_msg_contents(self):
-        
-        fieldname = message.get_array_elements(self.msg_cfg.message_name,)
+
+        fieldname = self.msg_cfg.message_name.decode("utf-8")
+
         return (fieldname,
                 self.msg_cfg.num_bytes,
                 self.msg_cfg.num_fields,
                 self.msg_cfg.whend)
+
+    def rm_field_by_idx(self, idx:int):
+        assert idx < self.get_num_fields()
+        parser_dll.rm_field_by_idx(self.msg_cfg_ptr, idx)
 
     def get_field_contents(self, idx):
         # get field by index position
@@ -180,12 +185,9 @@ class message:
         else:
             result = field_ptr.contents.parsed_val.uint_result
         
-        # get bitmask elements
-        bitmask = message.get_array_elements(field_ptr.contents.bitmask, MAX_BITMASK_LEN_BYTES)
-        
         return (field_ptr.contents.fieldname,
                 field_ptr.contents.converter,
-                bitmask,
+                field_ptr.contents.bitmask,
                 field_ptr.contents.num_bits,
                 field_ptr.contents.dtype,
                 field_ptr.contents.sf,
@@ -235,11 +237,6 @@ class message:
     def __del__(self):
         # define function to free fields when class deleted
         parser_dll.rm_all_msg_fields(self.msg_cfg)
-
-    @staticmethod
-    def get_array_elements(c_array, array_size):
-
-        return [c_array[idx] for idx in range(array_size)]
 
     @staticmethod
     def bitmask_from_tuple(bmask_array:tuple[int]):
