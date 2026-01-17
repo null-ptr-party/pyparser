@@ -2,8 +2,6 @@ import tkinter as tk
 from tkinter import ttk
 from message_parser import anymessage as anymsg
 
-# defines options for combobox in message builder.
-fieldnum_options = tuple([str(num) for num in range(0,anymsg.MAX_NUM_FIELDS)])
 # defines options for converters combobox
 converter_options = ("Twos Complement", "Offset Binary", "Complementary Offset Binary",
                           "Unsigned", "iee fp", "char")
@@ -68,7 +66,8 @@ class msg_builder(tk.Frame):
         ## field selector
         self.field_select_lbl = tk.Label(self.fieldframe, text="Select Field", justify="left")
         self.field_select_lbl.pack(side=tk.TOP, expand=True, fill="x")
-        self.field_select = ttk.Combobox(self.fieldframe, values=fieldnum_options)
+        # combobox options will be updated when fileds added.
+        self.field_select = ttk.Combobox(self.fieldframe)
         self.field_select.pack(side=tk.TOP, expand=True, fill="x")
 
         ## fieldname selection
@@ -105,24 +104,66 @@ class msg_builder(tk.Frame):
         self.dtype_lbl = tk.Label(self.dtype_frame, text="Dtype Out Select", justify="left")
         self.dtype_lbl.pack(side=tk.TOP, expand=True, fill="x")
         self.dtype = ttk.Combobox(self.dtype_frame, values=dtype_options)
-        self.dtype.pack(side=tk.TOP, expand=True, fill="x")
+        self.dtype.pack(side=tk.LEFT, expand=True, fill="x")
+        self.dtype_disp = tk.Label(self.dtype_frame, text="-")
+        self.dtype_disp.pack(side=tk.RIGHT)
+
+        ## sf entry
+        self.sf_frame = tk.Frame(self)
+        self.sf_frame.pack(side=tk.TOP, expand=True, fill="x")
+        self.sf_lbl = tk.Label(self.sf_frame, text="Scale Factor")
+        self.sf_lbl.pack(side=tk.TOP)
+        self.sf_entry = tk.Entry(self.sf_frame)
+        self.sf_entry.pack(side=tk.LEFT, expand=True, fill="x")
+        self.sf_disp = tk.Label(self.sf_frame, text="-")
+        self.sf_disp.pack(side=tk.RIGHT, expand=True, fill="x")
 
         # buttons
         self.update_field = tk.Button(self, text="Update Field")
-        self.append_field = tk.Button(self, text="Append Field")
+        self.append_field = tk.Button(self, text="Append Field", command=self.append_field)
         self.remove_field = tk.Button(self, text="Remove Field")
         self.update_field.pack(side=tk.TOP, expand=True, fill="x")
         self.append_field.pack(side=tk.TOP, expand=True, fill="x")
         self.remove_field.pack(side=tk.TOP, expand=True, fill="x")
 
-        ## field update button
-        #field_accept = tk.Button(fieldframe, text="Update Fieldname")
-        #field_accept.pack(side=tk.TOP, pady=5)
+    def append_field(self):
+        # get inputs
+        fieldname = self.fieldname_entry.get()
+        converter = msg_builder.enumerate_combobox(self.converter.get(), converter_options)
+        dtype = msg_builder.enumerate_combobox(self.dtype.get(), dtype_options)
+        bitmask_str = self.bitmask_entry.get()
+        sf_str = self.sf_entry.get()
+
+        try:
+            # validate inputs
+            assert len(fieldname) <= anymsg.MAX_FIELDNAME_LEN
+            if (dtype == 1): # 1 is float
+                assert sf_str.replace(".", "").isdigit() == 1 # check if all numberic after point removal
+                sf = float(sf_str)
+            else:
+                assert sf_str.isdigit() == 1
+                sf = int(sf_str)
+
+            bitmask = msg_builder.bitmask_tuple_from_str(bitmask_str) # build bitmask from string
+            assert len(bitmask) == self.msg.get_msg_contents()[1] # bitmask len must be same len as num bytes
+
+            # append field
+            self.msg.append_field_cfg(fieldname, dtype, converter, bitmask, sf)
+            self.update_field_options()
+
+        except AssertionError:
+            print("Invalid Field Input")
+
+    def remove_field(self):
+        idx_str = self.field_select.get()
+        idx = int(idx_str)
+        self.msg.rm_field_by_idx(idx)
+        self.update_field_options()
+
     def update_msg(self):
-        # validate inputs
         msgname_in = self.msgname_entry.get()
         num_bytes_in = self.num_bytes_entry.get()
-        whend_in = msg_builder.enumerate_combox(self.whend_select.get(), endian_options)
+        whend_in = msg_builder.enumerate_combobox(self.whend_select.get(), endian_options)
 
         try:
             # validate inputs
@@ -153,19 +194,39 @@ class msg_builder(tk.Frame):
 
         except AssertionError:
             print("Invalid Message input")
+    
+    def update_field_options(self):
+        # updates options based on number of fields
+        # in msgcfg
+        num_fields = self.msg.get_num_fields()
+        self.field_select["values"] = tuple([idx for idx in range(0, num_fields)])
 
     @staticmethod
-    def enumerate_combox(option, options):
+    def enumerate_combobox(option:str, options:tuple[str]):
         # returns enumerated option value for combobox
         for idx in range(0, len(options)):
             if (option == options[idx]):
                 return idx
 
+    @staticmethod
+    def bitmask_tuple_from_str(mask_str: str):
+        mask_bytes = mask_str.split(",")
+        bytes_out = []
+
+        for byte in mask_bytes:
+            if ("0x" in byte):
+                byte = int(byte, base=16)
+            else:
+                byte = int(byte)
+            bytes_out.append(byte)
+
+        return tuple(bytes_out)
+
 class MainWindow(tk.Tk):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.title("Python Message Parser")
-        self.geometry("500x500")
+        self.geometry("500x600")
         self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
         self.columnconfigure(0, weight=1)
