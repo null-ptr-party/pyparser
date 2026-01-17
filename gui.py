@@ -67,7 +67,9 @@ class msg_builder(tk.Frame):
         self.field_select_lbl = tk.Label(self.fieldframe, text="Select Field", justify="left")
         self.field_select_lbl.pack(side=tk.TOP, expand=True, fill="x")
         # combobox options will be updated when fileds added.
-        self.field_select = ttk.Combobox(self.fieldframe)
+        self.fieldnum = tk.StringVar(self.fieldframe)
+        self.fieldnum.trace_add("write", self.update_field_disp)
+        self.field_select = ttk.Combobox(self.fieldframe, textvariable=self.fieldnum)
         self.field_select.pack(side=tk.TOP, expand=True, fill="x")
 
         ## fieldname selection
@@ -121,7 +123,7 @@ class msg_builder(tk.Frame):
         # buttons
         self.update_field = tk.Button(self, text="Update Field")
         self.append_field = tk.Button(self, text="Append Field", command=self.append_field)
-        self.remove_field = tk.Button(self, text="Remove Field")
+        self.remove_field = tk.Button(self, text="Remove Field", command=self.remove_field)
         self.update_field.pack(side=tk.TOP, expand=True, fill="x")
         self.append_field.pack(side=tk.TOP, expand=True, fill="x")
         self.remove_field.pack(side=tk.TOP, expand=True, fill="x")
@@ -200,6 +202,17 @@ class msg_builder(tk.Frame):
         # in msgcfg
         num_fields = self.msg.get_num_fields()
         self.field_select["values"] = tuple([idx for idx in range(0, num_fields)])
+
+    def update_field_disp(self, *args):
+        # get field contents for selected field.
+        idxstr = self.fieldnum.get()
+        if (len(idxstr) != 0):
+            idx = int(idxstr)
+            contents = self.msg.get_field_contents(idx)
+            fieldname = contents[0]
+            print(fieldname)
+            self.fieldname_disp.config(text=fieldname)
+        
 
     @staticmethod
     def enumerate_combobox(option:str, options:tuple[str]):
