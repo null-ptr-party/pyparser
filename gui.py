@@ -234,7 +234,6 @@ class msg_builder(tk.Frame):
             else:
                 byte = int(byte)
             bytes_out.append(byte)
-
         return tuple(bytes_out)
 
 class MainWindow(tk.Tk):
