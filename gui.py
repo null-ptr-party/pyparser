@@ -17,47 +17,47 @@ class msg_builder(tk.Frame):
         
         # message name entry/display
         self.msgframe = tk.Frame(self)
-        self.msgframe.pack(side=tk.TOP, expand=True, fill="x")
+        self.msgframe.pack(side=tk.TOP, fill="x", expand=True)
         self.msgframe_label = tk.Label(self.msgframe, text="Messaage Name")
-        self.msgframe_label.pack(side=tk.TOP, fill="x")
+        self.msgframe_label.pack(side=tk.TOP, fill="x", expand=True)
         self.msgname_var = tk.StringVar(self.msgframe, value="messagename")
         self.msgname_entry = tk.Entry(self.msgframe)
-        self.msgname_entry.pack(side=tk.LEFT)
+        self.msgname_entry.pack(side=tk.LEFT, fill="x", expand=True)
         self.msgname_disp = tk.Label(self.msgframe, text="-")
-        self.msgname_disp.pack(side=tk.RIGHT, expand=True, fill="x")
+        self.msgname_disp.pack(side=tk.RIGHT, fill="x", expand=True)
 
         # number of bytes entry/display
         self.byteframe = tk.Frame(self)
-        self.byteframe.pack(side=tk.TOP, expand=True, fill="x")
+        self.byteframe.pack(side=tk.TOP, fill="x", expand=True)
         self.byteframe_label = tk.Label(self.byteframe, text="Number of Bytes")
-        self.byteframe_label.pack(side=tk.TOP, fill="x")
+        self.byteframe_label.pack(side=tk.TOP, fill="x", expand=True)
         self.num_bytes_entry = tk.Entry(self.byteframe)
         self.num_bytes_entry.pack(side=tk.LEFT, expand=True, fill="x")
         self.num_bytes_disp = tk.Label(self.byteframe, text="-")
-        self.num_bytes_disp.pack_propagate(False)
         self.num_bytes_disp.pack(side=tk.RIGHT, expand=True, fill="x")
 
         ## endianness selector
         self.whendframe = tk.Frame(self)
-        self.whendframe.pack(side=tk.TOP, expand=True, fill="x")
+        self.whendframe.pack(side=tk.TOP, fill="x", expand=True)
         self.whend_lbl = tk.Label(self.whendframe, text="Endianness", justify="left")
-        self.whend_lbl.pack(side=tk.TOP, fill="x")
+        self.whend_lbl.pack(side=tk.TOP, fill="x", expand=True)
         self.whend_select = ttk.Combobox(self.whendframe, values=endian_options)
-        self.whend_select.pack(side=tk.LEFT, fill="x")
+        self.whend_select.pack(side=tk.LEFT, fill="x", expand=True)
         self.whend_disp = tk.Label(self.whendframe, text="-")
-        self.whend_disp.pack(side=tk.RIGHT, expand=True, fill="x")
+        self.whend_disp.pack(side=tk.RIGHT, fill="x", expand=True)
 
         # number of fields display
         self.num_fields_frame = tk.Frame(self)
-        self.num_fields_frame.pack(side=tk.TOP, expand=True, fill="x")
+        self.num_fields_frame.pack(side=tk.TOP, fill="x", expand=True)
+        self.num_fields_var = tk.IntVar(self.num_fields_frame, value=0)
         self.num_fields_lbl = tk.Label(self.num_fields_frame, text="Number of Fields")
-        self.num_fields_lbl.pack(side=tk.TOP, fill="x")
-        self.num_fields_disp = tk.Label(self.num_fields_frame, text="-")
-        self.num_fields_disp.pack(side=tk.TOP, expand=True, fill="x")
+        self.num_fields_lbl.pack(side=tk.TOP, fill="x", expand=True)
+        self.num_fields_disp = tk.Label(self.num_fields_frame, textvariable=self.num_fields_var)
+        self.num_fields_disp.pack(side=tk.TOP, fill="x", expand=True)
 
         ## msg update button
         update_msg = tk.Button(self, text="Update Message", command=self.update_msg)
-        update_msg.pack(side=tk.TOP, pady=5, fill="x")
+        update_msg.pack(side=tk.TOP, pady=5, fill="x", expand=True)
 
         # fieldframe for selecting field
         self.fieldframe = tk.Frame(self)
@@ -92,7 +92,7 @@ class msg_builder(tk.Frame):
 
         ## Converter select
         self.converter_frame = tk.Frame(self)
-        self.converter_frame.pack(side=tk.TOP)
+        self.converter_frame.pack(side=tk.TOP, expand=True, fill="x")
         self.converter_lbl = tk.Label(self.converter_frame, text="Converter Select")
         self.converter_lbl.pack(side=tk.TOP, expand=True, fill="x")
         self.converter = ttk.Combobox(self.converter_frame, values=converter_options)
@@ -108,7 +108,7 @@ class msg_builder(tk.Frame):
         self.dtype = ttk.Combobox(self.dtype_frame, values=dtype_options)
         self.dtype.pack(side=tk.LEFT, expand=True, fill="x")
         self.dtype_disp = tk.Label(self.dtype_frame, text="-")
-        self.dtype_disp.pack(side=tk.RIGHT)
+        self.dtype_disp.pack(side=tk.RIGHT, expand=True, fill="x")
 
         ## sf entry
         self.sf_frame = tk.Frame(self)
@@ -152,6 +152,7 @@ class msg_builder(tk.Frame):
             # append field
             self.msg.append_field_cfg(fieldname, dtype, converter, bitmask, sf)
             self.update_field_options()
+            self.num_fields_var.set(self.msg.get_msg_contents()[2])
 
         except AssertionError:
             print("Invalid Field Input")
@@ -161,6 +162,7 @@ class msg_builder(tk.Frame):
         idx = int(idx_str)
         self.msg.rm_field_by_idx(idx)
         self.update_field_options()
+        self.num_fields_var.set(self.msg.get_msg_contents()[2])
 
     def update_msg(self):
         msgname_in = self.msgname_entry.get()
@@ -246,7 +248,7 @@ class MainWindow(tk.Tk):
         self.columnconfigure(1, weight=1)
         # configure rows and columns
         msg = msg_builder(self)
-        msg.grid(row=0,column=0, sticky="nw")
+        msg.grid(row=0,column=0, columnspan = 1, sticky="nesw")
 
 
 if __name__ == "__main__":
