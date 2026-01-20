@@ -256,10 +256,9 @@ class FileBrowser(tk.Frame):
 
         # create widgets
         self.inpath_entry = tk.Entry(self, textvariable=self.inpath_var)
-        self.inpath_browse = tk.Button(self, text="Browse", command=self.browse_infile)
+        self.inpath_browse = tk.Button(self, text="Browse Input File", command=self.browse_infile)
         self.outpath_entry = tk.Entry(self, textvariable=self.outpath_var)
-        self.outpath_browse_btn = tk.Button(self, text="Browse", command=self.browse_outfile)
-        self.parse_btn = tk.Button(self, text="Parse File")
+        self.outpath_browse_btn = tk.Button(self, text="Browse Output File", command=self.browse_outfile)
         self.parsemethod_btn = tk.Checkbutton(self, text="Parse Binary", variable=self.parsemethod_var)
         # create layout
         self.inpath_entry.grid(row=0,column=0, sticky="ew")
@@ -267,23 +266,28 @@ class FileBrowser(tk.Frame):
         self.outpath_entry.grid(row=1, column=0, sticky="ew")
         self.outpath_browse_btn.grid(row=1, column=1)
         self.parsemethod_btn.grid(row=2, column=0)
-        self.parse_btn.grid(row=2, column=1)
 
-    def browse_files(self):
+    def browse_infile(self):
+        # open file dialog
         filename = filedialog.askopenfilename(initialdir = "/",
                                     title = "Select a File",
                                     filetypes = (("Text files",
                                                 "*.txt*"),
                                                 ("all files",
                                                 "*.*")))
-            
-        return filename
 
-    def browse_infile(self):
-        self.inpath_var.set(self.browse_files())
+        self.inpath_var.set(filename)
 
     def browse_outfile(self):
-        self.outpath_var.set(self.browse_files())
+        # open file dialog
+        filename = filedialog.asksaveasfilename(initialdir = "/",
+                                    title = "Select a File",
+                                    filetypes = (("Text files",
+                                                "*.txt*"),
+                                                ("all files",
+                                                "*.*")))
+        # set path variable
+        self.outpath_var.set(filename)
 
 
 class MainWindow(tk.Tk):
