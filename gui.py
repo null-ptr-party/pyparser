@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from tkinter import filedialog
 from message_parser import anymessage as anymsg
 
 # defines options for converters combobox
@@ -236,6 +237,55 @@ class msg_builder(tk.Frame):
             bytes_out.append(byte)
         return tuple(bytes_out)
 
+class FileBrowser(tk.Frame):
+    """used for file entry and setting read method"""
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+
+        # configure geometry
+        self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
+        self.rowconfigure(2, weight=1)
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=1)
+
+        # define variables
+        self.inpath_var = tk.StringVar(self)
+        self.outpath_var = tk.StringVar(self)
+        self.parsemethod_var = tk.BooleanVar(self, value=0)
+
+        # create widgets
+        self.inpath_entry = tk.Entry(self, textvariable=self.inpath_var)
+        self.inpath_browse = tk.Button(self, text="Browse", command=self.browse_infile)
+        self.outpath_entry = tk.Entry(self, textvariable=self.outpath_var)
+        self.outpath_browse_btn = tk.Button(self, text="Browse", command=self.browse_outfile)
+        self.parse_btn = tk.Button(self, text="Parse File")
+        self.parsemethod_btn = tk.Checkbutton(self, text="Parse Binary", variable=self.parsemethod_var)
+        # create layout
+        self.inpath_entry.grid(row=0,column=0, sticky="ew")
+        self.inpath_browse.grid(row=0, column=1)
+        self.outpath_entry.grid(row=1, column=0, sticky="ew")
+        self.outpath_browse_btn.grid(row=1, column=1)
+        self.parsemethod_btn.grid(row=2, column=0)
+        self.parse_btn.grid(row=2, column=1)
+
+    def browse_files(self):
+        filename = filedialog.askopenfilename(initialdir = "/",
+                                    title = "Select a File",
+                                    filetypes = (("Text files",
+                                                "*.txt*"),
+                                                ("all files",
+                                                "*.*")))
+            
+        return filename
+
+    def browse_infile(self):
+        self.inpath_var.set(self.browse_files())
+
+    def browse_outfile(self):
+        self.outpath_var.set(self.browse_files())
+
+
 class MainWindow(tk.Tk):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -247,7 +297,9 @@ class MainWindow(tk.Tk):
         self.columnconfigure(1, weight=1)
         # configure rows and columns
         msg = msg_builder(self)
-        msg.grid(row=0,column=0, columnspan = 1, sticky="nesw")
+        msg.grid(row=1, column=0, columnspan = 1, sticky="nesw")
+        browser = FileBrowser(self)
+        browser.grid(row=0,column=0, columnspan=1, sticky="new")
 
 
 if __name__ == "__main__":
