@@ -16,6 +16,8 @@ class msg_builder(tk.Frame):
         super().__init__(parent, *args, **kwargs)
         self.msg = anymsg.message()
         
+        self.browser = FileBrowser(self)
+        self.browser.pack(side=tk.TOP, fill="x", expand=True)
         # message name entry/display
         self.msgframe = tk.Frame(self)
         self.msgframe.pack(side=tk.TOP, fill="x", expand=True)
@@ -125,9 +127,11 @@ class msg_builder(tk.Frame):
         self.update_field = tk.Button(self, text="Update Field")
         self.append_field = tk.Button(self, text="Append Field", command=self.append_field)
         self.remove_field = tk.Button(self, text="Remove Field", command=self.remove_field)
+        self.parse_file = tk.Button(self, text="Parse File", command=self.parse_file)
         self.update_field.pack(side=tk.TOP, expand=True, fill="x")
         self.append_field.pack(side=tk.TOP, expand=True, fill="x")
         self.remove_field.pack(side=tk.TOP, expand=True, fill="x")
+        self.parse_file.pack(side=tk.TOP, expand=True, fill="x")
 
     def append_field(self):
         # get inputs
@@ -215,7 +219,13 @@ class msg_builder(tk.Frame):
             fieldname = contents[0]
             print(fieldname)
             self.fieldname_disp.config(text=fieldname)
+
+    def parse_file(self):
+        infile = self.browser.inpath_var
+        outfile = self.browser.outpath_var
+        parsemethod = self.browser.parsemethod_var
         
+        self.msg.parse_file(infile.get(), outfile.get(), parsemethod.get())
 
     @staticmethod
     def enumerate_combobox(option:str, options:tuple[str]):
@@ -301,9 +311,7 @@ class MainWindow(tk.Tk):
         self.columnconfigure(1, weight=1)
         # configure rows and columns
         msg = msg_builder(self)
-        msg.grid(row=1, column=0, columnspan = 1, sticky="nesw")
-        browser = FileBrowser(self)
-        browser.grid(row=0,column=0, columnspan=1, sticky="new")
+        msg.grid(row=1, column=0, rowspan = 2, columnspan = 1, sticky="nesw")
 
 
 if __name__ == "__main__":
