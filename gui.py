@@ -124,7 +124,7 @@ class msg_builder(tk.Frame):
         self.sf_disp.pack(side=tk.LEFT)
 
         # buttons
-        self.update_field = tk.Button(self, width=75, text="Update Field")
+        self.update_field = tk.Button(self, width=75, text="Update Field", command=self.update_field)
         self.append_field = tk.Button(self, width=75, text="Append Field", command=self.append_field)
         self.remove_field = tk.Button(self, width=75, text="Remove Field", command=self.remove_field)
         self.parse_file = tk.Button(self, width=75, text="Parse File", command=self.parse_file)
@@ -133,13 +133,14 @@ class msg_builder(tk.Frame):
         self.remove_field.pack(side=tk.TOP, anchor="w")
         self.parse_file.pack(side=tk.TOP, anchor="w")
 
-    def append_field(self):
-        # get inputs
+    def process_field_input(self):
+         # get inputs
         fieldname = self.fieldname_entry.get()
         converter = msg_builder.enumerate_combobox(self.converter.get(), converter_options)
         dtype = msg_builder.enumerate_combobox(self.dtype.get(), dtype_options)
         bitmask_str = self.bitmask_entry.get()
         sf_str = self.sf_entry.get()
+        bitmask = msg_builder.bitmask_tuple_from_str(bitmask_str) # build bitmask from string
 
         try:
             # validate inputs
@@ -151,16 +152,34 @@ class msg_builder(tk.Frame):
                 assert sf_str.isdigit() == 1
                 sf = int(sf_str)
 
-            bitmask = msg_builder.bitmask_tuple_from_str(bitmask_str) # build bitmask from string
             assert len(bitmask) == self.msg.get_msg_contents()[1] # bitmask len must be same len as num bytes
 
-            # append field
-            self.msg.append_field_cfg(fieldname, dtype, converter, bitmask, sf)
-            self.update_field_options()
-            self.num_fields_var.set(self.msg.get_msg_contents()[2])
+            return (fieldname,
+                    dtype,
+                    converter,
+                    bitmask,
+                    sf)
 
         except AssertionError:
             print("Invalid Field Input")
+            return None
+
+
+    def append_field(self):
+        # get inputs
+        contents = self.process_field_input()
+        if contents is not None:
+            fieldname = contents[0]
+            dtype = contents[1]
+            converter = contents[2]
+            bitmask = contents[3]
+            sf = contents[4]
+            # append field
+            self.msg.append_field_cfg(fieldname, dtype, converter, bitmask, sf)
+            # update options in option combobox
+            self.update_field_options()
+            # update number of fields
+            self.num_fields_var.set(self.msg.get_msg_contents()[2])
 
     def remove_field(self):
         idx_str = self.field_select.get()
@@ -203,7 +222,19 @@ class msg_builder(tk.Frame):
 
         except AssertionError:
             print("Invalid Message input")
-    
+
+    def update_field(self):
+        # get inputs
+        contents = self.process_field_input()
+        idxstr = self.fieldnum.get()
+        # check validity of index and contents
+        if (len(idxstr) != 0) and (contents is not None):
+            idx = int(idxstr)
+            # get inputs
+            contents = self.process_field_input()
+            self.msg.update_fieldcfg_by_idx(idx, contents[0], contents[1], contents[2], contents[3], contents[4])
+            self.update_field_disp() # update displayed fields.
+
     def update_field_options(self):
         # updates options based on number of fields
         # in msgcfg
@@ -217,8 +248,16 @@ class msg_builder(tk.Frame):
             idx = int(idxstr)
             contents = self.msg.get_field_contents(idx)
             fieldname = contents[0]
-            print(fieldname)
+            converter = contents[1]
+            bitmask = contents[2]
+            dtype = contents[4]
+            sf = contents[5]
+
             self.fieldname_disp.config(text=fieldname)
+            self.converter_disp.config(text=msg_builder.str_from_enum_idx(converter_options, converter))
+            self.bitmask_disp.config(text=bitmask)
+            self.dtype_disp.config(text=msg_builder.str_from_enum_idx(dtype_options, dtype))
+            self.sf_disp.config(text=str(sf))
 
     def parse_file(self):
         infile = self.browser.inpath_var
@@ -233,6 +272,14 @@ class msg_builder(tk.Frame):
         for idx in range(0, len(options)):
             if (option == options[idx]):
                 return idx
+
+    @staticmethod
+    def str_from_enum_idx(enum:tuple[str], enum_idx:int):
+        cntr = 0
+        for enum_str in enum:
+            if (cntr == enum_idx):
+                return enum_str
+            cntr+=1
 
     @staticmethod
     def bitmask_tuple_from_str(mask_str: str):
