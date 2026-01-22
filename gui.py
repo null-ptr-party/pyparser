@@ -242,6 +242,7 @@ class msg_builder(tk.Frame):
         self.field_select["values"] = tuple([idx for idx in range(0, num_fields)])
 
     def update_field_disp(self, *args):
+        # updates displayed field based on selected index
         # get field contents for selected field.
         idxstr = self.fieldnum.get()
         if (len(idxstr) != 0):
@@ -249,7 +250,7 @@ class msg_builder(tk.Frame):
             contents = self.msg.get_field_contents(idx)
             fieldname = contents[0]
             converter = contents[1]
-            bitmask = contents[2]
+            bitmask = self.msg.bmsk_str_from_bmsk(contents[2])
             dtype = contents[4]
             sf = contents[5]
 
