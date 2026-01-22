@@ -237,6 +237,17 @@ class message:
     def dict_from_msgcfg(self):
         pass # used to create yaml
 
+    def bmsk_str_from_bmsk(self, bmsk):
+        bmsk_str = ""
+        ctr = 0
+        for byte in bmsk:
+            if (ctr >= self.msg_cfg.num_bytes):
+                break
+            bmsk_str = bmsk_str + str(hex(byte))
+            ctr+=1
+
+        return bmsk_str
+
     def __del__(self):
         # define function to free fields when class deleted
         parser_dll.rm_all_msg_fields(self.msg_cfg)
