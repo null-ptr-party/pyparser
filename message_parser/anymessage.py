@@ -214,25 +214,28 @@ class message:
         fparsed_ptr = ctypes.c_char_p(fparsed.encode("utf-8"))
         parser_dll.open_and_parse_file(ftoparse_ptr, fparsed_ptr, self.msg_cfg_ptr, readmethod)
     
-    def update_cfg_by_idx(self, idx, fieldname, dtype, converter, bitmask, sf):
+    def update_fieldcfg_by_idx(self, idx, fieldname, dtype, converter, bitmask, sf):
         # get field by index position
         assert idx < self.num_fields
         # validate inputs
-        assert len(fieldcfg["fieldname"]) < MAX_FIELDNAME_LEN
-        assert ((fieldcfg["dtype"] >= 0) and (fieldcfg["dtype"] < NUM_DTYPE_OPTIONS))
-        assert ((fieldcfg["converter"] >= 0) and (fieldcfg["converter"] < NUM_CONVERTER_OPTIONS))
+        assert len(fieldname) < MAX_FIELDNAME_LEN
+        assert ((dtype >= 0) and (dtype < NUM_DTYPE_OPTIONS))
+        assert ((converter >= 0) and (converter < NUM_CONVERTER_OPTIONS))
 
         # create c compatible types.
-        fieldname = ctypes.c_char_p(fieldname)
+        fieldname = ctypes.c_char_p(fieldname.encode("utf-8"))
         dtype = ctypes.c_ubyte(dtype)
         converter = ctypes.c_ubyte(converter)
         bitmask = ctypes.pointer(self.bitmask_from_tuple(bitmask))
         sf = ctypes.c_double(sf)
 
-        parser_dll.update_cfg_by_idx(self.msg_cfg_ptr, idx, fieldname, dtype, converter, bitmask, sf)
+        parser_dll.update_fieldcfg_by_idx(self.msg_cfg_ptr, idx, bitmask, fieldname, converter, dtype, sf)
 
     def get_num_fields(self):
         return self.msg_cfg.num_fields
+
+    def dict_from_msgcfg(self):
+        pass # used to create yaml
 
     def __del__(self):
         # define function to free fields when class deleted
