@@ -1,6 +1,5 @@
 import ctypes
-import faulthandler
-faulthandler.enable()
+import yaml
 
 # load dll
 parser_dll = ctypes.cdll.LoadLibrary(r"./message_parser/lib/anyparse/anyparse.dll")
@@ -158,12 +157,12 @@ class message:
     
     def get_msg_contents(self):
 
-        fieldname = self.msg_cfg.message_name.decode("utf-8")
+        msgname = self.msg_cfg.message_name.decode("utf-8")
 
-        return (fieldname,
-                self.msg_cfg.num_bytes,
-                self.msg_cfg.num_fields,
-                self.msg_cfg.whend)
+        return {"message_name": msgname,
+                "num_bytes": self.msg_cfg.num_bytes,
+                "num_fields": self.msg_cfg.num_fields,
+                "whend": self.msg_cfg.whend}
 
     def rm_field_by_idx(self, idx:int):
         assert idx < self.get_num_fields()
@@ -185,13 +184,16 @@ class message:
         else:
             result = field_ptr.contents.parsed_val.uint_result
         
-        return (field_ptr.contents.fieldname,
-                field_ptr.contents.converter,
-                field_ptr.contents.bitmask,
-                field_ptr.contents.num_bits,
-                field_ptr.contents.dtype,
-                field_ptr.contents.sf,
-                result)
+        return {"fieldname": field_ptr.contents.fieldname,
+                "converter": field_ptr.contents.converter,
+                "bitmask": field_ptr.contents.bitmask,
+                "num_bits": field_ptr.contents.num_bits,
+                "dtype": field_ptr.contents.dtype,
+                "sf": field_ptr.contents.sf,
+                "parsed_val": field_ptr.contents.parsed_val}
+
+    def msgcfg_to_yaml(self, filepath):
+        pass
 
     def update_msgcfg(self, msgname, num_bytes, whend):
         # note this function is different than init
