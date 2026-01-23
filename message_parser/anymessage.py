@@ -192,9 +192,6 @@ class message:
                 "sf": field_ptr.contents.sf,
                 "parsed_val": field_ptr.contents.parsed_val}
 
-    def msgcfg_to_yaml(self, filepath):
-        pass
-
     def update_msgcfg(self, msgname, num_bytes, whend):
         # note this function is different than init
         # since it does not 0 out pointer fields and num fields.
@@ -236,8 +233,18 @@ class message:
     def get_num_fields(self):
         return self.msg_cfg.num_fields
 
-    def dict_from_msgcfg(self):
-        pass # used to create yaml
+    def yaml_from_msgcfg(self, filepath):
+        msg = self.get_msg_contents()
+        msg["fields"] = {}
+
+        for idx in range(0, msg["num_fields"]):
+            field = self.get_field_contents(idx)
+            fieldname = field["fieldname"]
+            del field["fieldname"]
+            msg["fields"][fieldname] = field
+
+        with open(filepath, "w") as file:
+            yaml.dump(msg, file, sort_keys=True)
 
     def bmsk_str_from_bmsk(self, bmsk):
         bmsk_str = ""
