@@ -152,13 +152,13 @@ class msg_builder(tk.Frame):
                 assert sf_str.isdigit() == 1
                 sf = int(sf_str)
 
-            assert len(bitmask) == self.msg.get_msg_contents()[1] # bitmask len must be same len as num bytes
+            assert len(bitmask) == self.msg.get_msg_contents()["num_bytes"] # bitmask len must be same len as num bytes
 
-            return (fieldname,
-                    dtype,
-                    converter,
-                    bitmask,
-                    sf)
+            return {"fieldname": fieldname,
+                    "dtype": dtype,
+                    "converter": converter,
+                    "bitmask": bitmask,
+                    "sf": sf}
 
         except AssertionError:
             print("Invalid Field Input")
@@ -169,24 +169,24 @@ class msg_builder(tk.Frame):
         # get inputs
         contents = self.process_field_input()
         if contents is not None:
-            fieldname = contents[0]
-            dtype = contents[1]
-            converter = contents[2]
-            bitmask = contents[3]
-            sf = contents[4]
+            fieldname = contents["fieldname"]
+            dtype = contents["dtype"]
+            converter = contents["converter"]
+            bitmask = contents["bitmask"]
+            sf = contents["sf"]
             # append field
             self.msg.append_field_cfg(fieldname, dtype, converter, bitmask, sf)
             # update options in option combobox
             self.update_field_options()
             # update number of fields
-            self.num_fields_var.set(self.msg.get_msg_contents()[2])
+            self.num_fields_var.set(self.msg.get_msg_contents()["num_fields"])
 
     def remove_field(self):
         idx_str = self.field_select.get()
         idx = int(idx_str)
         self.msg.rm_field_by_idx(idx)
         self.update_field_options()
-        self.num_fields_var.set(self.msg.get_msg_contents()[2])
+        self.num_fields_var.set(self.msg.get_msg_contents()["num_fields"])
 
     def update_msg(self):
         msgname_in = self.msgname_entry.get()
@@ -206,10 +206,10 @@ class msg_builder(tk.Frame):
 
             # get message contents
             contents = self.msg.get_msg_contents()
-            msgname_ret = str(contents[0])
-            num_bytes_ret = str(contents[1])
-            num_fields_ret = str(contents[2])
-            whend_ret = contents[3]
+            msgname_ret = str(contents["message_name"])
+            num_bytes_ret = str(contents["num_bytes"])
+            num_fields_ret = str(contents["num_fields"])
+            whend_ret = contents["whend"]
 
             if (whend_ret == 0):
                 whend_ret = "Big Endian"
@@ -232,7 +232,12 @@ class msg_builder(tk.Frame):
             idx = int(idxstr)
             # get inputs
             contents = self.process_field_input()
-            self.msg.update_fieldcfg_by_idx(idx, contents[0], contents[1], contents[2], contents[3], contents[4])
+            self.msg.update_fieldcfg_by_idx(idx,
+                                           contents["fieldname"],
+                                           contents["dtype"],
+                                           contents["converter"],
+                                           contents["bitmask"],
+                                           contents["sf"])
             self.update_field_disp() # update displayed fields.
 
     def update_field_options(self):
@@ -248,11 +253,11 @@ class msg_builder(tk.Frame):
         if (len(idxstr) != 0):
             idx = int(idxstr)
             contents = self.msg.get_field_contents(idx)
-            fieldname = contents[0]
-            converter = contents[1]
-            bitmask = self.msg.bmsk_str_from_bmsk(contents[2])
-            dtype = contents[4]
-            sf = contents[5]
+            fieldname = contents["fieldname"]
+            converter = contents["converter"]
+            bitmask = self.msg.bmsk_str_from_bmsk(contents["bitmask"])
+            dtype = contents["dtype"]
+            sf = contents["sf"]
 
             self.fieldname_disp.config(text=fieldname)
             self.converter_disp.config(text=msg_builder.str_from_enum_idx(converter_options, converter))
