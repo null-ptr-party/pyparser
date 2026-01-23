@@ -128,10 +128,22 @@ class msg_builder(tk.Frame):
         self.append_field = tk.Button(self, width=75, text="Append Field", command=self.append_field)
         self.remove_field = tk.Button(self, width=75, text="Remove Field", command=self.remove_field)
         self.parse_file = tk.Button(self, width=75, text="Parse File", command=self.parse_file)
+        self.save_cfg = tk.Button(self, width=75, text="Save Config", command=self.save_cfg)
         self.update_field.pack(side=tk.TOP, anchor="w")
         self.append_field.pack(side=tk.TOP, anchor="w")
         self.remove_field.pack(side=tk.TOP, anchor="w")
         self.parse_file.pack(side=tk.TOP, anchor="w")
+        self.save_cfg.pack(side=tk.TOP, anchor="w")
+    
+    def save_cfg(self):
+        filename = filedialog.asksaveasfilename(initialdir = "/",
+                            title = "Select a File",
+                            filetypes = (("Text files",
+                                        "*.yaml*"),
+                                        ("all files",
+                                        "*.*")))
+
+        self.msg.yaml_from_msgcfg(filename)
 
     def process_field_input(self):
          # get inputs
@@ -309,6 +321,8 @@ class FileBrowser(tk.Frame):
         self.rowconfigure(0, weight=0)
         self.rowconfigure(1, weight=0)
         self.rowconfigure(2, weight=0)
+        self.rowconfigure(3, weight=0)
+        self.rowconfigure(4, weight=0)
         self.columnconfigure(0, weight=0)
         self.columnconfigure(1, weight=0)
 
