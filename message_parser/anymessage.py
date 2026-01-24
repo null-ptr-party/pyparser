@@ -184,9 +184,12 @@ class message:
         else:
             result = field_ptr.contents.parsed_val.uint_result
         
-        return {"fieldname": field_ptr.contents.fieldname,
+        fieldname = field_ptr.contents.fieldname.decode("utf-8")
+        bitmask = tuple(bytes(field_ptr.contents.bitmask)[0:self.get_msg_contents()["num_bytes"]])
+
+        return {"fieldname": fieldname,
                 "converter": field_ptr.contents.converter,
-                "bitmask": field_ptr.contents.bitmask,
+                "bitmask": bitmask,
                 "num_bits": field_ptr.contents.num_bits,
                 "dtype": field_ptr.contents.dtype,
                 "sf": field_ptr.contents.sf,
@@ -240,11 +243,13 @@ class message:
         for idx in range(0, msg["num_fields"]):
             field = self.get_field_contents(idx)
             fieldname = field["fieldname"]
-            del field["fieldname"]
+            del field["fieldname"] # dont include fieldname
+            del field["parsed_val"] # dont include parsed val in yaml
+            del field["num_bits"]
             msg["fields"][fieldname] = field
 
         with open(filepath, "w") as file:
-            yaml.dump(msg, file, sort_keys=True)
+            yaml.dump(msg, file, sort_keys=False)
 
     def bmsk_str_from_bmsk(self, bmsk):
         bmsk_str = ""
