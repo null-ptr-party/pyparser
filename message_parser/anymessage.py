@@ -251,6 +251,37 @@ class message:
         with open(filepath, "w") as file:
             yaml.dump(msg, file, sort_keys=False)
 
+    def load_msgcfg(self, filepath):
+        # loads message config from yaml
+        try:
+            with open(filepath, "r") as f:
+                cfg = yaml.load(f, Loader=yaml.FullLoader)
+                # delete all existing configs
+                parser_dll.rm_all_msg_fields(self.msg_cfg_ptr)
+                msgname = cfg["message_name"]
+                num_bytes = cfg["num_bytes"]
+                num_fields = cfg["num_fields"]
+                whend = cfg["whend"]
+                # update message config
+                self.update_msgcfg(msgname, num_bytes, whend)
+                cnt = 0
+                for k,v in cfg["fields"].items():
+                    if (cnt > num_fields):
+                        break
+
+                    fieldname = k
+                    converter = v["converter"]
+                    bitmask = message.bitmask_from_tuple(v["bitmask"])
+                    dtype = v["dtype"]
+                    sf = v["sf"]
+                    self.append_field_cfg(fieldname, dtype, converter, bitmask, sf)
+                    cnt += 1
+
+        except FileNotFoundError:
+            print("Can't find file {}".format(filepath))
+
+
+
     def bmsk_str_from_bmsk(self, bmsk):
         bmsk_str = ""
         ctr = 0
