@@ -129,21 +129,36 @@ class msg_builder(tk.Frame):
         self.remove_field = tk.Button(self, width=75, text="Remove Field", command=self.remove_field)
         self.parse_file = tk.Button(self, width=75, text="Parse File", command=self.parse_file)
         self.save_cfg = tk.Button(self, width=75, text="Save Config", command=self.save_cfg)
+        self.load_cfg = tk.Button(self, width=75, text="Load Config", command=self.load_cfg)
         self.update_field.pack(side=tk.TOP, anchor="w")
         self.append_field.pack(side=tk.TOP, anchor="w")
         self.remove_field.pack(side=tk.TOP, anchor="w")
         self.parse_file.pack(side=tk.TOP, anchor="w")
         self.save_cfg.pack(side=tk.TOP, anchor="w")
+        self.load_cfg.pack(side=tk.TOP, anchor="w")
     
     def save_cfg(self):
         filename = filedialog.asksaveasfilename(initialdir = "/",
                             title = "Select a File",
-                            filetypes = (("Text files",
+                            filetypes = (("Yaml files",
                                         "*.yaml*"),
                                         ("all files",
                                         "*.*")))
 
         self.msg.yaml_from_msgcfg(filename)
+
+    def load_cfg(self):
+        filename = filedialog.askopenfilename(initialdir = "/",
+                    title = "Select a File",
+                    filetypes = (("Yaml files",
+                                "*.yaml*"),
+                                ("all files",
+                                "*.*")))
+
+        self.msg.load_msgcfg(filename)
+        self.update_field_options()
+        self.refresh_msgdisplay()
+
 
     def process_field_input(self):
          # get inputs
@@ -199,6 +214,26 @@ class msg_builder(tk.Frame):
         self.msg.rm_field_by_idx(idx)
         self.update_field_options()
         self.num_fields_var.set(self.msg.get_msg_contents()["num_fields"])
+
+    def refresh_msgdisplay(self):
+        # get message contents
+        contents = self.msg.get_msg_contents()
+        msgname_ret = str(contents["message_name"])
+        num_bytes_ret = str(contents["num_bytes"])
+        num_fields_ret = str(contents["num_fields"])
+        whend_ret = contents["whend"]
+
+        if (whend_ret == 0):
+            whend_ret = "Big Endian"
+        else:
+            whend_ret = "Little Endian"
+            
+        self.msgname_disp.config(text=msgname_ret)
+        self.num_bytes_disp.config(text=num_bytes_ret)
+        self.whend_disp.config(text=whend_ret)
+        self.msgname_disp.config(text=msgname_ret)
+        self.num_bytes_disp.config(text=num_bytes_ret)
+        self.whend_disp.config(text=whend_ret)
 
     def update_msg(self):
         msgname_in = self.msgname_entry.get()
@@ -371,7 +406,7 @@ class MainWindow(tk.Tk):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.title("Python Message Parser")
-        self.geometry("500x650")
+        self.geometry("600x650")
         self.rowconfigure(0, weight=0)
         self.rowconfigure(1, weight=0)
         self.columnconfigure(0, weight=0)
